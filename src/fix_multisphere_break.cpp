@@ -264,6 +264,8 @@ void FixMultisphereBreak::pre_neighbor()
     vectorZeroizeN(delflag,atom->nlocal+atom->nghost);
     vectorZeroizeN(existflag,atom->nlocal+atom->nghost);
 
+
+    check_bodies_atoms("FixMultisphereBreak::pre_neighbor()");
     if(multisphere_.check_lost_atoms(body_,delflag,existflag,fix_volumeweight_ms_->vector_atom))
         next_reneighbor = update->ntimestep + 100;
 

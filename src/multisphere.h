@@ -171,6 +171,9 @@ namespace LAMMPS_NS {
       inline void set_v_body(int ibody_local,double *vel)
       { vcm_.set(ibody_local,vel); }
 
+      inline void set_x_body(int ibody_local,double *pos)
+      { xcm_.set(ibody_local,pos); }
+
       inline void set_omega_body(int ibody_local,double *omega)
       { omega_.set(ibody_local,omega); }
 
@@ -200,6 +203,16 @@ namespace LAMMPS_NS {
       void nrigidReset(int ibody_local, int resetValue)
       { nrigid_(ibody_local) = resetValue; }
 
+      std::vector<int> check_lost_atoms_no_delete(int *body);
+
+      std::vector<int> deleted_body_types;
+      std::vector<int> body_types_;
+
+
+
+      inline void remap_values(int *remap,int ibody_local)
+      { vectorCopyN(remapflag_(ibody_local),remap, 4); }
+    
     protected:
 
       Multisphere(LAMMPS *lmp);
@@ -252,9 +265,7 @@ namespace LAMMPS_NS {
       // # of atoms in each rigid body
       ScalarContainer<int> &nrigid_;
 
-      // image flags of xcm of each rigid body
-      ScalarContainer<int> &imagebody_;
-      VectorContainer<int,4> &remapflag_;
+      
 
       // flag for on/off of center-of-mass force, torque
       VectorContainer<bool,3> &fflag_;
@@ -272,6 +283,11 @@ namespace LAMMPS_NS {
       // temperature and buffer for each body
       ScalarContainer<double> &temp_;
       ScalarContainer<double> &temp_old_;
+
+      // image flags of xcm of each rigid body
+      ScalarContainer<int> &imagebody_;
+      VectorContainer<int,4> &remapflag_;
+
   };
 
   // *************************************

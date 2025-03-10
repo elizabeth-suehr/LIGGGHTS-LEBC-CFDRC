@@ -516,7 +516,7 @@ int AtomVecHybrid::pack_border(int n, int *list, double *buf,
 
   if (atom->nextra_border)
     for (int iextra = 0; iextra < atom->nextra_border; iextra++)
-      m += modify->fix[atom->extra_border[iextra]]->pack_border(n,list,&buf[m]);
+      m += modify->fix[atom->extra_border[iextra]]->pack_border(n,list,&buf[m],pbc);
 
   return m;
 }
@@ -630,7 +630,7 @@ int AtomVecHybrid::pack_border_vel(int n, int *list, double *buf,
 
   if (atom->nextra_border)
     for (int iextra = 0; iextra < atom->nextra_border; iextra++)
-      m += modify->fix[atom->extra_border[iextra]]->pack_border(n,list,&buf[m]);
+      m += modify->fix[atom->extra_border[iextra]]->pack_border(n,list,&buf[m],pbc);
 
   return m;
 }

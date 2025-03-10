@@ -51,6 +51,7 @@ namespace SignalHandler
 
 bool request_write_restart(false);
 bool request_quit(false);
+bool request_exit(false);
 bool enable_restart_writing(true);
 
 void int_handler(int signum)

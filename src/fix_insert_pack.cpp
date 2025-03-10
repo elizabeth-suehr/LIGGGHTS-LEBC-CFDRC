@@ -507,6 +507,36 @@ void FixInsertPack::x_v_omega(int ninsert_this_local,int &ninserted_this_local, 
                 ninserted_this_local++;
             }
         }
+        	
+        // MPGCOMMENT 02-14-2023 ---> particles with overlap insert next
+        // ninserted_this_local < ninsert_this_local
+        int noover = ninserted_this_local;
+        for(int itotal = noover; itotal < ninsert_this_local; itotal++)
+        {
+            pti = fix_distribution->pti_list[ninserted_this_local];
+            double rbound = pti->r_bound_ins;
+
+            if(screen && print_stats_during_flag && (ninsert_this_local >= 10) && (0 == itotal % (ninsert_this_local/10)))
+                fprintf(screen,"insertion: proc %d at %d %%\n",comm->me,10*itotal/(ninsert_this_local/10));
+
+            if(all_in_flag) ins_region->generate_random_shrinkby_cut(pos,rbound,true);
+            else ins_region->generate_random(pos,true);
+
+            // randomize vel, omega, quat here
+            vectorCopy3D(v_insert,v_toInsert);
+            // could ramdonize vel, omega, quat here
+            generate_random_velocity(v_toInsert);
+
+            if(quat_random_)
+                MathExtraLiggghts::random_unit_quat(random,quat_insert);
+
+            if(pos[0] == 0. && pos[1] == 0. && pos[2] == 0.)
+                error->one(FLERR,"FixInsertPack::x_v_omega() illegal position");
+            ninserted_spheres_this_local += pti->set_x_v_omega(pos,v_toInsert,omega_insert,quat_insert);
+            mass_inserted_this_local += pti->mass_ins;
+            ninserted_this_local++;
+        }
+
     }
     
 }

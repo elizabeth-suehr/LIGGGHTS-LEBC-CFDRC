@@ -187,7 +187,9 @@ void Irregular::migrate_atoms()
 
   // reset global->local map
 
-  if (map_style) atom->map_set();
+  // if (map_style && !domain->lebc) atom->map_set();
+
+
 }
 
 /* ----------------------------------------------------------------------

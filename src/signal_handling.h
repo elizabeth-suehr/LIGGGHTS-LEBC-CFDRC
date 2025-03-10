@@ -49,6 +49,7 @@ namespace SignalHandler
 {
 extern bool request_write_restart;
 extern bool request_quit;
+extern bool request_exit;
 extern bool enable_restart_writing;
 
 extern void int_handler(int signum);

@@ -80,6 +80,7 @@ namespace LAMMPS_NS {
            int insert();
            int check_near_set_x_v_omega(double *x,double *v, double *omega, double *quat, RegionNeighborList<interpolate_no> & neighList);//, double **xnear, int &nnear)
            int set_x_v_omega(double *,double *,double *, double *);
+           int set_x_v_omega_center_processor(int, int);
 
            void random_rotate(double,double,double);
 

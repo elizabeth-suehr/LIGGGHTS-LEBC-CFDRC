@@ -51,7 +51,7 @@
 
 using namespace LAMMPS_NS;
 
-#define EXTRA 1000
+#define EXTRA 5000
 
 /* ----------------------------------------------------------------------
    allocate and initialize array or hash table for global -> local map

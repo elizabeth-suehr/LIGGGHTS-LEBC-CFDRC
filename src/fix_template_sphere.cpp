@@ -430,7 +430,7 @@ double FixTemplateSphere::max_r_bound()
 
 double FixTemplateSphere::volexpect()
 {
-    if(volume_expect < vol_limit)
+    if(volume_expect < vol_limit*10e-19)
     {
         
         error->fix_error(FLERR,this,"Volume expectancy too small. Change 'volume_limit' "
@@ -444,6 +444,13 @@ double FixTemplateSphere::volexpect()
 double FixTemplateSphere::massexpect()
 {
     return mass_expect;
+}
+
+/* ----------------------------------------------------------------------*/
+
+double FixTemplateSphere::densityexpect()
+{
+    return density_expect;
 }
 
 /* ----------------------------------------------------------------------*/

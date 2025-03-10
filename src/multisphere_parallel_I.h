@@ -46,28 +46,38 @@
 
 inline int MultisphereParallel::pack_exchange_rigid(int i, double *buf)
 {
-  
-  int m = 1; 
+
+  int m = 1;
   double xbound[3];
   bool dummy = false;
 
   // calculate xbound in global coo sys
-  MathExtraLiggghts::local_coosys_to_cartesian
-  (
-    xbound,xcm_to_xbound_(i),
-    ex_space_(i),ey_space_(i),ez_space_(i)
-  );
+  MathExtraLiggghts::local_coosys_to_cartesian(
+      xbound, xcm_to_xbound_(i),
+      ex_space_(i), ey_space_(i), ez_space_(i));
 
-  vectorAdd3D(xcm_(i),xbound,xbound);
+  vectorAdd3D(xcm_(i), xbound, xbound);
 
   // have to pack xbound first because exchange() tests against first 3 values in buffer
-  vectorToBuf3D(xbound,buf,m);
-  
-  m += customValues_.pushElemToBuffer(i,&(buf[m]),OPERATION_COMM_EXCHANGE,dummy,dummy,dummy);
+  vectorToBuf3D(xbound, buf, m);
+
+  m += customValues_.pushElemToBuffer(i, &(buf[m]), OPERATION_COMM_EXCHANGE, dummy, dummy, dummy);
 
   buf[0] = m;
-  
+
   return m;
+}
+
+inline int MultisphereParallel::pack_exchange_rigid_lebc(double *buf, double *buf_from)
+{
+
+  int count = static_cast<int>(buf_from[0]);
+
+  for (int i = 0; i < count; i++)
+  {
+    buf[i] = buf_from[i];
+  }
+  return count;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -80,8 +90,8 @@ inline int MultisphereParallel::unpack_exchange_rigid(double *buf)
 
   int nvalues = buf[m++];
 
-  bufToVector3D(xbound,buf,m);
-  m += customValues_.popElemFromBuffer(&(buf[m]),OPERATION_COMM_EXCHANGE,dummy,dummy,dummy);
+  bufToVector3D(xbound, buf, m);
+  m += customValues_.popElemFromBuffer(&(buf[m]), OPERATION_COMM_EXCHANGE, dummy, dummy, dummy);
 
   nbody_++;
 

@@ -41,9 +41,9 @@
 
 #ifdef FIX_CLASS
 
-FixStyle(multisphere,FixMultisphere)
-FixStyle(multisphere/nointegration,FixMultisphere)
-FixStyle(concave,FixMultisphere)
+FixStyle(multisphere, FixMultisphere)
+    FixStyle(multisphere / nointegration, FixMultisphere)
+        FixStyle(concave, FixMultisphere)
 
 #else
 
@@ -58,231 +58,332 @@ FixStyle(concave,FixMultisphere)
 #include "fix_heat_gran.h"
 #include "atom.h"
 #include "comm.h"
+#include "particleToInsert_multisphere.h"
 
-namespace LAMMPS_NS {
-
-enum
+namespace LAMMPS_NS
 {
-    MS_COMM_UNDEFINED,
-    MS_COMM_FW_BODY,
-    MS_COMM_FW_IMAGE_DISPLACE,
-    MS_COMM_FW_V_OMEGA,
-    MS_COMM_FW_F_TORQUE,
-    MS_COMM_FW_TEMP,
-    MS_COMM_REV_X_V_OMEGA,
-    MS_COMM_REV_V_OMEGA,
-    MS_COMM_REV_IMAGE,
-    MS_COMM_REV_DISPLACE,
-    MS_COMM_REV_TEMP
-};
 
-class FixMultisphere : public Fix
-{
-    friend class SetMultisphere;
+    enum
+    {
+        MS_COMM_UNDEFINED,
+        MS_COMM_FW_BODY,
+        MS_COMM_FW_IMAGE_DISPLACE,
+        MS_COMM_FW_V_OMEGA,
+        MS_COMM_FW_F_TORQUE,
+        MS_COMM_FW_TEMP,
+        MS_COMM_REV_X_V_OMEGA,
+        MS_COMM_REV_V_OMEGA,
+        MS_COMM_REV_IMAGE,
+        MS_COMM_REV_DISPLACE,
+        MS_COMM_REV_TEMP
+    };
 
-     friend class FixMoveMultisphere;
-     public:
+    class FixMultisphere : public Fix
+    {
+        friend class SetMultisphere;
 
-      FixMultisphere(class LAMMPS *, int, char **);
-      virtual ~FixMultisphere();
+        friend class FixMoveMultisphere;
 
-      void post_create();
-      void pre_delete(bool unfixflag);
-      virtual int setmask();
-      virtual void init();
+    public:
+        FixMultisphere(class LAMMPS *, int, char **);
+        virtual ~FixMultisphere();
 
-      virtual void setup(int);
-      virtual void setup_pre_force(int);
-      virtual void setup_pre_exchange();
-      virtual void setup_pre_neighbor();
+        void post_create();
+        void pre_delete(bool unfixflag);
+        virtual int setmask();
+        virtual void init();
 
-      virtual double extend_cut_ghost();
+        virtual void setup(int);
+        virtual void setup_pre_force(int);
+        virtual void setup_pre_exchange();
+        virtual void setup_pre_neighbor();
 
-      void initial_integrate(int);
-      virtual void pre_force(int);
-      virtual void pre_final_integrate();
-      void final_integrate();
-      void comm_correct_force(bool setupflag);
-      virtual void calc_force(bool setupflag);
+        virtual double extend_cut_ghost();
 
-      void add_body_finalize();
+        void initial_integrate(int);
+        virtual void pre_force(int);
+        virtual void pre_final_integrate();
+        void final_integrate();
+        void comm_correct_force(bool setupflag);
+        virtual void calc_force(bool setupflag);
 
-      double memory_usage();
-      void grow_arrays(int);
-      void copy_arrays(int i, int j, int delflag);
+        void add_body_finalize();
 
-      void pre_exchange();
-      void pre_neighbor();
-      void set_arrays(int);
+        double memory_usage();
+        void grow_arrays(int);
+        void copy_arrays(int i, int j, int delflag);
 
-      int size_restart(int nlocal);
-      int maxsize_restart();
+        void pre_exchange();
+        void pre_neighbor();
+        void set_arrays(int);
 
-      void write_restart(FILE *fp);
-      void restart(char *buf);
+        int size_restart(int nlocal);
+        int maxsize_restart();
 
-      int modify_param(int narg, char **arg);
+        void write_restart(FILE *fp);
+        void restart(char *buf);
 
-      // *************************************
-      #include "fix_multisphere_comm_I.h"
-      // *************************************
+        int modify_param(int narg, char **arg);
 
-      int dof(int);
-      double ** get_dump_ref(int &nb, int &nprop, char* prop);
-      double max_r_bound();
+// *************************************
+#include "fix_multisphere_comm_I.h"
+        // *************************************
 
-      void add_remove_callback(FixRemove *ptr);
+        int dof(int);
+        double **get_dump_ref(int &nb, int &nprop, char *prop);
+        double max_r_bound();
 
-      // public inline access
+        void add_remove_callback(FixRemove *ptr);
 
-      void *extract(const char *name, int &len1, int &len2)
-      {
-          if (strcmp(name,"body") == 0)
-          {
-              len1 = atom->tag_max();
-              len2 = 1;
-              return (void *) body_;
-          }
-          return multisphere_.extract(name,len1,len2);
-      }
+        // public inline access
 
-      inline class Multisphere& data()
-      { return multisphere_;}
+        void *extract(const char *name, int &len1, int &len2)
+        {
+            if (strcmp(name, "body") == 0)
+            {
+                len1 = atom->tag_max();
+                len2 = 1;
+                return (void *)body_;
+            }
+            return multisphere_.extract(name, len1, len2);
+        }
 
-      inline class FixPropertyAtom* fix_delflag()
-      { return fix_delflag_; }
+        inline class Multisphere &data()
+        {
+            return multisphere_;
+        }
 
-      inline int belongs_to(int i) const
-      { return body_[i]; }
+        inline class FixPropertyAtom *fix_delflag()
+        {
+            return fix_delflag_;
+        }
 
-      inline int n_body()
-      { return data().n_body(); }
+        inline int belongs_to(int i) const
+        {
+            return body_[i];
+        }
 
-      inline int n_body_all()
-      { return data().n_body_all(); }
+        inline int n_body()
+        {
+            return data().n_body();
+        }
 
-      inline int tag_max_body()
-      { return data().tag_max_body(); }
+        inline int n_body_all()
+        {
+            return data().n_body_all();
+        }
 
-      inline int ntypes()
-      { return ntypes_; }
+        inline int tag_max_body()
+        {
+            return data().tag_max_body();
+        }
 
-      inline double* vclump()
-      { return Vclump_; }
+        inline int ntypes()
+        {
+            return ntypes_;
+        }
 
-      inline double extract_ke()
-      { return data().extract_ke(); }
+        inline double *vclump()
+        {
+            return Vclump_;
+        }
 
-      inline double extract_rke()
-      { return data().extract_rke(); }
+        inline double extract_ke()
+        {
+            return data().extract_ke();
+        }
 
-      inline double extract_vave()
-      { return data().extract_vave(); }
+        inline double extract_rke()
+        {
+            return data().extract_rke();
+        }
 
-      inline double extract_omega_ave()
-      { return data().extract_omega_ave(); }
+        inline double extract_vave()
+        {
+            return data().extract_vave();
+        }
 
-      inline void set_v_body_from_atom_index(int iatom,double *vel)
-      {if(body_[iatom] >= 0) multisphere_.set_v_body(body_[iatom],vel); }
+        inline double extract_omega_ave()
+        {
+            return data().extract_omega_ave();
+        }
 
-      inline void set_omega_body_from_atom_index(int iatom,double *omega)
-      {if(body_[iatom] >= 0) multisphere_.set_omega_body(body_[iatom],omega); }
+        inline void set_v_body_from_atom_index(int iatom, double *vel)
+        {
+            if (body_[iatom] >= 0)
+                multisphere_.set_v_body(body_[iatom], vel);
+        }
 
-      inline void set_body_displace(int i,double *_displace,int body_id,double volume_weight)
-      {
-        body_[i] = body_id; vectorCopy3D(_displace,displace_[i]);
-        if(fix_volumeweight_ms_)
-            fix_volumeweight_ms_->vector_atom[i] = volume_weight;
-      }
+        inline void set_omega_body_from_atom_index(int iatom, double *omega)
+        {
+            if (body_[iatom] >= 0)
+                multisphere_.set_omega_body(body_[iatom], omega);
+        }
 
-      int calc_n_steps(int iatom,double *p_ref,double *normalvec,double *v_normal)
-      { return multisphere_.calc_n_steps(iatom,body_[iatom],p_ref,normalvec,v_normal); }
+        inline void set_body_displace(int i, double *_displace, int body_id, double volume_weight)
+        {
+            body_[i] = body_id;
+            vectorCopy3D(_displace, displace_[i]);
+            if (fix_volumeweight_ms_)
+                fix_volumeweight_ms_->vector_atom[i] = volume_weight;
+        }
 
-      void release(int iatom,double *v_toInsert,double *omega_toInsert)
-      { return multisphere_.release(iatom,body_[iatom],v_toInsert,omega_toInsert); }
+        inline void get_body_displace(int i, double *displace)
+        {
+            // TODO! Multisphere single sphere mixture problems
+            double **ex_space = multisphere_.ex_space_.begin();
+            double **ey_space = multisphere_.ey_space_.begin();
+            double **ez_space = multisphere_.ez_space_.begin();
 
-      bool allow_group_and_set()
-      { return allow_group_and_set_; }
+            if (body_[i] < 0)
+            {
 
-      bool use_volumeweight()
-      { return use_volumeweight_ms_; }
+                displace[0] = 0.;
+                displace[1] = 0.;
+                displace[2] = 0.;
+                return;
+            }
+                
+            int ibody = map(body_[i]);
 
-      const FixPropertyAtom *get_volumeweight() const
-      { return fix_volumeweight_ms_; }
+            if (ibody < 0)
+            {
+                displace[0] = 0.;
+                displace[1] = 0.;
+                displace[2] = 0.;
+                return;
+            }
+            MathExtra::matvec(ex_space[ibody], ey_space[ibody], ez_space[ibody], displace_[i], displace);
 
-      void scale_displace(int i, double factor)
-      { vectorScalarMult3D(displace_[i],factor); }
+        }
 
-      void set_v_communicate();
+        int calc_n_steps(int iatom, double *p_ref, double *normalvec, double *v_normal)
+        {
+            return multisphere_.calc_n_steps(iatom, body_[iatom], p_ref, normalvec, v_normal);
+        }
 
-      inline void rev_comm_displace()
-      {
-        rev_comm_flag_ = MS_COMM_REV_DISPLACE;
-        reverse_comm();
-      }
+        void release(int iatom, double *v_toInsert, double *omega_toInsert)
+        {
+            return multisphere_.release(iatom, body_[iatom], v_toInsert, omega_toInsert);
+        }
 
-      void set_add_dragforce(bool value)
-      {
-        add_dragforce_ = value;
-      }
+        bool allow_group_and_set()
+        {
+            return allow_group_and_set_;
+        }
 
-     protected:
+        bool use_volumeweight()
+        {
+            return use_volumeweight_ms_;
+        }
 
-      void ms_error(const char * file, int line,char const *errmsg);
+        const FixPropertyAtom *get_volumeweight() const
+        {
+            return fix_volumeweight_ms_;
+        }
 
-      inline int map(int i)
-      { return data().map(i); }
+        void scale_displace(int i, double factor)
+        {
+            vectorScalarMult3D(displace_[i], factor);
+        }
 
-      inline int tag(int i)
-      { return data().tag(i); }
+        void set_v_communicate();
 
-      void set_xv();
-      void set_xv(int);
-      void set_v();
-      void set_v(int);
 
-      bool do_modify_body_forces_torques_;
-      virtual void modify_body_forces_torques() {}
+        void set_xv(); //moved from public EMS Comment 
 
-      class Multisphere &multisphere_;
-      class FixPropertyAtom *fix_corner_ghost_;
-      class FixPropertyAtom *fix_delflag_;
-      class FixPropertyAtom *fix_existflag_;
-      class FixPropertyAtom *fix_volumeweight_ms_; 
-      bool use_volumeweight_ms_;
-      class FixGravity *fix_gravity_;
-      FixHeatGran *fix_heat_;
+        inline void out_rev_comm_x_v_omega()
+        {
+            rev_comm_flag_ = MS_COMM_REV_X_V_OMEGA;
+            reverse_comm();
+        }
 
-      //int comm_di_;
-      int fw_comm_flag_;
-      int rev_comm_flag_;
+        inline void rev_comm_displace()
+        {
+            rev_comm_flag_ = MS_COMM_REV_DISPLACE;
+            reverse_comm();
+        }
 
-      // per-atom properties handled by this fix
-      int *body_;                // which body each atom is part of (-1 if none)
-      double **displace_;        // displacement of each atom in body coords
+        void set_add_dragforce(bool value)
+        {
+            add_dragforce_ = value;
+        }
 
-      double dtv,dtf,dtq;
 
-      std::vector<FixRemove*> fix_remove_;
+        // EMS COMMENT: Variable added to keep track of real bodies, i.e. the highest id of the all real bodies
+        int lebc_highest_body_id;
+        bool force_volume_fraction = false;
+        double **force_length; //the force_length of each atom in each body (doesn't include to force_length between atoms of different bodies)
 
-      // MS communication
-      int ntypes_;
-      double *Vclump_;
+        bool check_bodies_atoms(std::string fff);
 
-      bool allow_group_and_set_;
-      bool allow_heatsource_;
+    protected:
+        class ParticleToInsertMultisphere *pti;
+        class ParticleToInsertMultisphere **pti_list;
 
-      double CAdd_;                 //Added mass coefficient
-      double fluidDensity_;         //fluid density
+        void ms_error(const char *file, int line, char const *errmsg);
 
-      bool concave_;    
+        inline int map(int i)
+        {
+            return data().map(i);
+        }
 
-      bool add_dragforce_; 
+        inline int tag(int i)
+        {
+            return data().tag(i);
+        }
 
-      inline int getMask(int ibody)
-      { return 1; }
+        
+        void set_xv(int);
+        void set_v();
+        void set_v(int);
 
-};
+        bool do_modify_body_forces_torques_;
+        virtual void modify_body_forces_torques() {}
+
+        class Multisphere &multisphere_;
+        class FixPropertyAtom *fix_corner_ghost_;
+        class FixPropertyAtom *fix_delflag_;
+        class FixPropertyAtom *fix_existflag_;
+        class FixPropertyAtom *fix_volumeweight_ms_;
+        bool use_volumeweight_ms_;
+        class FixGravity *fix_gravity_;
+        FixHeatGran *fix_heat_;
+
+        // int comm_di_;
+        int fw_comm_flag_;
+        int rev_comm_flag_;
+
+        // per-atom properties handled by this fix
+        int *body_;         // which body each atom is part of (-1 if none)
+        double **displace_; // displacement of each atom in body coords
+        
+
+        double dtv, dtf, dtq;
+
+        std::vector<FixRemove *> fix_remove_;
+
+        // MS communication
+        int ntypes_;
+        double *Vclump_;
+
+        bool allow_group_and_set_;
+        bool allow_heatsource_;
+
+        double CAdd_;         // Added mass coefficient
+        double fluidDensity_; // fluid density
+
+        bool concave_;
+
+        bool add_dragforce_;
+
+        inline int getMask(int ibody)
+        {
+            return 1;
+        }
+
+        
+    };
 
 }
 

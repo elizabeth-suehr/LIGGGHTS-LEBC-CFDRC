@@ -48,164 +48,213 @@
     certain rights in this software.  This software is distributed under
     the GNU General Public License.
 ------------------------------------------------------------------------- */
+/*------------------------------------------------------------------------
+    This is code has been edited for the Lees Edwards Boundary Condition for
+    Multisphere and single sphere, edited by Elizabeth Suehr
+    elizabeth.suehr@gmail.com
+    emsuehr@ucdavis.edu //Probably gone after 2025-2026
+
+    This file is open-source, distributed under the terms of the GNU Public
+    License, version 2 or later. It is distributed in the hope that it will
+    be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. You should have
+    received a copy of the GNU General Public License along with this code.
+    If not, see http://www.gnu.org/licenses . See also top-level README
+    and LICENSE files.
+
+    I do not know how licensing work, please email me if you see anything
+    wrong so I do not get in trouble :)
+------------------------------------------------------------------------- */
 
 #ifndef LMP_DOMAIN_H
 #define LMP_DOMAIN_H
 
 #include <cmath>
 #include "pointers.h"
-#include "error.h" 
-#include "comm.h" 
-#include "vector_liggghts.h" 
-#include "neighbor.h" 
-#include "atom.h" 
+#include "error.h"
+#include "comm.h"
+#include "vector_liggghts.h"
+#include "neighbor.h"
+#include "atom.h"
 #include "math_extra_liggghts.h"
 
-#define SMALL_DMBRDR 1.0e-8 
+#define SMALL_DMBRDR 1.0e-8
 
-namespace LAMMPS_NS {
+namespace LAMMPS_NS
+{
 
-class Domain : protected Pointers {
- public:
-  int box_exist;                         // 0 = not yet created, 1 = exists
-  int dimension;                         // 2 = 2d, 3 = 3d
-  int nonperiodic;                       // 0 = periodic in all 3 dims
+  class Domain : protected Pointers
+  {
+  public:
+    int box_exist;                       // 0 = not yet created, 1 = exists
+    int dimension;                       // 2 = 2d, 3 = 3d
+    int nonperiodic;                     // 0 = periodic in all 3 dims
                                          // 1 = periodic or fixed in all 6
                                          // 2 = shrink-wrap in any of 6
-  int xperiodic,yperiodic,zperiodic;     // 0 = non-periodic, 1 = periodic
-  int periodicity[3];                    // xyz periodicity as array
+    int xperiodic, yperiodic, zperiodic; // 0 = non-periodic, 1 = periodic
+    int periodicity[3];                  // xyz periodicity as array
+    int lebc;                            // 0 = no lebc, 1 = lebc is active
+    double ssr;
+    double lebc_displacement;
 
-  int boundary[3][2];                    // settings for 6 boundaries
-                                         // 0 = periodic
-                                         // 1 = fixed non-periodic
-                                         // 2 = shrink-wrap non-periodic
-                                         // 3 = shrink-wrap non-per w/ min
+    int boundary[3][2]; // settings for 6 boundaries
+                        // 0 = periodic
+                        // 1 = fixed non-periodic
+                        // 2 = shrink-wrap non-periodic
+                        // 3 = shrink-wrap non-per w/ min
 
-  int triclinic;                         // 0 = orthog box, 1 = triclinic
-  int tiltsmall;                         // 1 if limit tilt, else 0
+    int triclinic; // 0 = orthog box, 1 = triclinic
+    int tiltsmall; // 1 if limit tilt, else 0
 
-                                         // orthogonal box
-  double xprd,yprd,zprd;                 // global box dimensions
-  double xprd_half,yprd_half,zprd_half;  // half dimensions
-  double prd[3];                         // array form of dimensions
-  double prd_half[3];                    // array form of half dimensions
+    // orthogonal box
+    double xprd, yprd, zprd;                // global box dimensions
+    double xprd_half, yprd_half, zprd_half; // half dimensions
+    double prd[3];                          // array form of dimensions
+    double prd_half[3];                     // array form of half dimensions
 
-                                         // triclinic box
-                                         // xprd,xprd_half,prd,prd_half =
-                                         // same as if untilted
-  double prd_lamda[3];                   // lamda box = (1,1,1)
-  double prd_half_lamda[3];              // lamda half box = (0.5,0.5,0.5)
+    // triclinic box
+    // xprd,xprd_half,prd,prd_half =
+    // same as if untilted
+    double prd_lamda[3];      // lamda box = (1,1,1)
+    double prd_half_lamda[3]; // lamda half box = (0.5,0.5,0.5)
 
-  double boxlo[3],boxhi[3];              // orthogonal box global bounds
+    double boxlo[3], boxhi[3]; // orthogonal box global bounds
 
-                                         // triclinic box
-                                         // boxlo/hi = same as if untilted
-  double boxlo_lamda[3],boxhi_lamda[3];  // lamda box = (0,1)
-  double boxlo_bound[3],boxhi_bound[3];  // bounding box of tilted domain
-  double corners[8][3];                  // 8 corner points
+    // triclinic box
+    // boxlo/hi = same as if untilted
+    double boxlo_lamda[3], boxhi_lamda[3]; // lamda box = (0,1)
+    double boxlo_bound[3], boxhi_bound[3]; // bounding box of tilted domain
+    double corners[8][3];                  // 8 corner points
 
-                                         // orthogonal box & triclinic box
-  double minxlo,minxhi;                  // minimum size of global box
-  double minylo,minyhi;                  // when shrink-wrapping
-  double minzlo,minzhi;                  // tri only possible for non-skew dims
+    // orthogonal box & triclinic box
+    double minxlo, minxhi; // minimum size of global box
+    double minylo, minyhi; // when shrink-wrapping
+    double minzlo, minzhi; // tri only possible for non-skew dims
 
-                                         // orthogonal box
-  double sublo[3],subhi[3];              // sub-box bounds on this proc
+    // orthogonal box
+    double sublo[3], subhi[3]; // sub-box bounds on this proc
 
-                                         // triclinic box
-                                         // sublo/hi = undefined
-  double sublo_lamda[3],subhi_lamda[3];  // bounds of subbox in lamda
+    // triclinic box
+    // sublo/hi = undefined
+    double sublo_lamda[3], subhi_lamda[3]; // bounds of subbox in lamda
 
-                                         // triclinic box
-  double xy,xz,yz;                       // 3 tilt factors
-  double h[6],h_inv[6];                           // shape matrix in Voigt notation
-  double h_rate[6],h_ratelo[3];          // rate of box size/shape change
+    // triclinic box
+    double xy, xz, yz;             // 3 tilt factors
+    double h[6], h_inv[6];         // shape matrix in Voigt notation
+    double h_rate[6], h_ratelo[3]; // rate of box size/shape change
 
-  int box_change;                // 1 if any of next 3 flags are set, else 0
-  int box_change_size;           // 1 if box size changes, 0 if not
-  int box_change_shape;          // 1 if box shape changes, 0 if not
-                                 
-  int box_change_domain;         // 1 if proc sub-domains change, 0 if not
+    int box_change;       // 1 if any of next 3 flags are set, else 0
+    int box_change_size;  // 1 if box size changes, 0 if not
+    int box_change_shape; // 1 if box shape changes, 0 if not
 
-  int deform_flag;                // 1 if fix deform exist, else 0
-  int deform_vremap;              // 1 if fix deform remaps v, else 0
-  int deform_groupbit;            // atom group to perform v remap for
+    int box_change_domain; // 1 if proc sub-domains change, 0 if not
 
-  class Lattice *lattice;                  // user-defined lattice
+    int deform_flag;     // 1 if fix deform exist, else 0
+    int deform_vremap;   // 1 if fix deform remaps v, else 0
+    int deform_groupbit; // atom group to perform v remap for
 
-  int nregion;                             // # of defined Regions
-  int maxregion;                           // max # list can hold
-  class Region **regions;                  // list of defined Regions
+    class Lattice *lattice; // user-defined lattice
 
-  bool is_wedge;
+    int nregion;            // # of defined Regions
+    int maxregion;          // max # list can hold
+    class Region **regions; // list of defined Regions
 
-  Domain(class LAMMPS *);
-  virtual ~Domain();
-  virtual void init();
-  void set_initial_box();
-  virtual void set_global_box();
-  virtual void set_lamda_box();
-  virtual void set_local_box();
-  virtual void reset_box();
-  virtual void pbc();
-  void image_check();
-  void box_too_small_check();
-  void minimum_image(double &, double &, double &);
-  void minimum_image(double *);
-  int closest_image(int, int);
-  void closest_image(const double * const, const double * const,
-                     double * const);
-  void remap(double *, tagint &);
-  void remap(double *);
-  void remap_near(double *, double *);
-  void unmap(double *, tagint);
-  void unmap(double *, tagint, double *);
-  void image_flip(int, int, int);
-  void set_lattice(int, char **);
-  void add_region(int, char **);
-  void delete_region(int, char **);
-  int find_region(const char *);
-  virtual void set_boundary(int, char **, int); 
-  void set_box(int, char **);
-  virtual void print_box(const char *); 
-  void boundary_string(char *);
+    bool is_wedge;
 
-  virtual void lamda2x(int);
-  virtual void x2lamda(int);
-  virtual void lamda2x(double *, double *);
-  virtual void x2lamda(double *, double *);
-  void x2lamda(double *, double *, double *, double *);
-  void bbox(double *, double *, double *, double *);
-  void box_corners();
+    Domain(class LAMMPS *);
+    virtual ~Domain();
+    virtual void init();
+    void set_initial_box();
+    virtual void set_global_box();
+    virtual void set_lamda_box();
+    virtual void set_local_box();
+    virtual void reset_box();
+    virtual void pbc();
+    void image_check();
+    void box_too_small_check();
+    void minimum_image(double &, double &, double &);
+    void minimum_image(double *);
+    int closest_image(int, int);
+    void closest_image(const double *const, const double *const,
+                       double *const);
+    void remap(double *, tagint &);
+    void remap_lebc(double *, double *, tagint &);
+    void remap(double *);
+    void remap_near(double *, double *);
+    void unmap(double *, tagint);
+    void unmap(double *, tagint, double *);
+    void image_flip(int, int, int);
+    void set_lattice(int, char **);
+    void add_region(int, char **);
+    void delete_region(int, char **);
+    int find_region(const char *);
+    virtual void set_boundary(int, char **, int);
+    void set_box(int, char **);
+    virtual void print_box(const char *);
+    void boundary_string(char *);
 
-  // minimum image convention check
-  // return 1 if any distance > 1/2 of box size
-  // inline since called from neighbor build inner loop
+    virtual void lamda2x(int);
+    virtual void x2lamda(int);
+    virtual void lamda2x(double *, double *);
+    virtual void x2lamda(double *, double *);
+    void x2lamda(double *, double *, double *, double *);
+    void bbox(double *, double *, double *, double *);
+    void box_corners();
 
-  inline int minimum_image_check(double dx, double dy, double dz) {
-    if (xperiodic && fabs(dx) > xprd_half) return 1;
-    if (yperiodic && fabs(dy) > yprd_half) return 1;
-    if (zperiodic && fabs(dz) > zprd_half) return 1;
-    return 0;
-  }
+    // minimum image convention check
+    // return 1 if any distance > 1/2 of box size
+    // inline since called from neighbor build inner loop
 
-  int is_in_domain(double* pos); 
-  int is_in_subdomain(double* pos); 
-  int is_in_extended_subdomain(double* pos); 
-  double dist_subbox_borders(double* pos); 
-  void min_subbox_extent(double &min_extent,int &dim); 
-  int is_periodic_ghost(int i); 
-  bool is_owned_or_first_ghost(int i); 
+    inline int minimum_image_check(double dx, double dy, double dz)
+    {
+      if (xperiodic && fabs(dx) > xprd_half)
+        return 1;
+      if (yperiodic && fabs(dy) > yprd_half)
+        return 1;
+      if (zperiodic && fabs(dz) > zprd_half)
+        return 1;
+      return 0;
+    }
 
-  virtual int is_in_domain_wedge(double* pos) { UNUSED(pos); return 0; } 
-  virtual int is_in_subdomain_wedge(double* pos) { UNUSED(pos); return 0; } 
-  virtual int is_in_extended_subdomain_wedge(double* pos) { UNUSED(pos); return 0; } 
-  virtual double dist_subbox_borders_wedge(double* pos) { UNUSED(pos); return 0.; } 
-  virtual int is_periodic_ghost_wedge(int i) { UNUSED(i); return 0;} 
+    int is_in_domain(double *pos);
+    int is_in_subdomain(double *pos);
+    int is_in_extended_subdomain(double *pos);
+    double dist_subbox_borders(double *pos);
+    void min_subbox_extent(double &min_extent, int &dim);
+    int is_periodic_ghost(int i);
+    bool is_owned_or_first_ghost(int i);
 
- private:
-  double small[3];                  // fractions of box lengths
-};
+    virtual int is_in_domain_wedge(double *pos)
+    {
+      UNUSED(pos);
+      return 0;
+    }
+    virtual int is_in_subdomain_wedge(double *pos)
+    {
+      UNUSED(pos);
+      return 0;
+    }
+    virtual int is_in_extended_subdomain_wedge(double *pos)
+    {
+      UNUSED(pos);
+      return 0;
+    }
+    virtual double dist_subbox_borders_wedge(double *pos)
+    {
+      UNUSED(pos);
+      return 0.;
+    }
+    virtual int is_periodic_ghost_wedge(int i)
+    {
+      UNUSED(i);
+      return 0;
+    }
+
+    void update_lebc_displacement();
+
+  private:
+    double small[3]; // fractions of box lengths
+  };
 
 #include "domain_I.h"
 

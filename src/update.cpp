@@ -94,16 +94,19 @@ Update::Update(LAMMPS *lmp) : Pointers(lmp)
   minimize_style = NULL;
   minimize = NULL;
 
-  if (lmp->cuda) {
-    str = (char *) "verlet/cuda";
-    create_integrate(1,&str,NULL);
-  } else {
-    str = (char *) "verlet";
-    create_integrate(1,&str,NULL);
+  if (lmp->cuda)
+  {
+    str = (char *)"verlet/cuda";
+    create_integrate(1, &str, NULL);
+  }
+  else
+  {
+    str = (char *)"verlet";
+    create_integrate(1, &str, NULL);
   }
 
-  str = (char *) "cg";
-  create_minimize(1,&str);
+  str = (char *)"cg";
+  create_minimize(1, &str);
 
   force_dt_reset_ = false;
 }
@@ -112,12 +115,12 @@ Update::Update(LAMMPS *lmp) : Pointers(lmp)
 
 Update::~Update()
 {
-  delete [] unit_style;
+  delete[] unit_style;
 
-  delete [] integrate_style;
+  delete[] integrate_style;
   delete integrate;
 
-  delete [] minimize_style;
+  delete[] minimize_style;
   delete minimize;
 }
 
@@ -129,18 +132,21 @@ void Update::init()
   // integrate/minimize style must be CUDA variant
 
   if (whichflag == 1 && lmp->cuda)
-    if (strstr(integrate_style,"cuda") == NULL)
-      error->all(FLERR,"USER-CUDA mode requires CUDA variant of run style");
+    if (strstr(integrate_style, "cuda") == NULL)
+      error->all(FLERR, "USER-CUDA mode requires CUDA variant of run style");
   if (whichflag == 2 && lmp->cuda)
-    if (strstr(minimize_style,"cuda") == NULL)
-      error->all(FLERR,"USER-CUDA mode requires CUDA variant of min style");
+    if (strstr(minimize_style, "cuda") == NULL)
+      error->all(FLERR, "USER-CUDA mode requires CUDA variant of min style");
 
   // init the appropriate integrate and/or minimize class
   // if neither (e.g. from write_restart) then just return
 
-  if (whichflag == 0) return;
-  if (whichflag == 1) integrate->init();
-  else if (whichflag == 2) minimize->init();
+  if (whichflag == 0)
+    return;
+  if (whichflag == 1)
+    integrate->init();
+  else if (whichflag == 2)
+    minimize->init();
 
   // only set first_update if a run or minimize is being performed
 
@@ -157,9 +163,10 @@ void Update::set_units(const char *style)
   // http://physics.nist.gov/cuu/Constants/Table/allascii.txt
   // using thermochemical calorie = 4.184 J
 
-  if (strcmp(style,"lj") == 0) {
+  if (strcmp(style, "lj") == 0)
+  {
     force->boltz = 1.0;
-    force->hplanck = 0.18292026;  // using LJ parameters for argon
+    force->hplanck = 0.18292026; // using LJ parameters for argon
     force->mvv2e = 1.0;
     force->ftm2v = 1.0;
     force->mv2d = 1.0;
@@ -168,7 +175,7 @@ void Update::set_units(const char *style)
     force->qe2f = 1.0;
     force->vxmu2f = 1.0;
     force->xxt2kmu = 1.0;
-    force->e_mass = 0.0;    // not yet set
+    force->e_mass = 0.0; // not yet set
     force->hhmrr2e = 0.0;
     force->mvh2r = 0.0;
     force->angstrom = 1.0;
@@ -177,8 +184,9 @@ void Update::set_units(const char *style)
 
     dt = 0.005;
     neighbor->skin = 0.3;
-
-  } else if (strcmp(style,"real") == 0) {
+  }
+  else if (strcmp(style, "real") == 0)
+  {
     force->boltz = 0.0019872067;
     force->hplanck = 95.306976368;
     force->mvv2e = 48.88821291 * 48.88821291;
@@ -189,7 +197,7 @@ void Update::set_units(const char *style)
     force->qe2f = 23.060549;
     force->vxmu2f = 1.4393264316e4;
     force->xxt2kmu = 0.1;
-    force->e_mass = 1.0/1836.1527556560675;
+    force->e_mass = 1.0 / 1836.1527556560675;
     force->hhmrr2e = 0.0957018663603261;
     force->mvh2r = 1.5339009481951;
     force->angstrom = 1.0;
@@ -198,8 +206,9 @@ void Update::set_units(const char *style)
 
     dt = 1.0;
     neighbor->skin = 2.0;
-
-  } else if (strcmp(style,"metal") == 0) {
+  }
+  else if (strcmp(style, "metal") == 0)
+  {
     force->boltz = 8.617343e-5;
     force->hplanck = 4.135667403e-3;
     force->mvv2e = 1.0364269e-4;
@@ -210,7 +219,7 @@ void Update::set_units(const char *style)
     force->qe2f = 1.0;
     force->vxmu2f = 0.6241509647;
     force->xxt2kmu = 1.0e-4;
-    force->e_mass = 0.0;    // not yet set
+    force->e_mass = 0.0; // not yet set
     force->hhmrr2e = 0.0;
     force->mvh2r = 0.0;
     force->angstrom = 1.0;
@@ -219,8 +228,9 @@ void Update::set_units(const char *style)
 
     dt = 0.001;
     neighbor->skin = 2.0;
-
-  } else if (strcmp(style,"si") == 0) {
+  }
+  else if (strcmp(style, "si") == 0)
+  {
     force->boltz = 1.3806504e-23;
     force->hplanck = 6.62606896e-34;
     force->mvv2e = 1.0;
@@ -231,7 +241,7 @@ void Update::set_units(const char *style)
     force->qe2f = 1.0;
     force->vxmu2f = 1.0;
     force->xxt2kmu = 1.0;
-    force->e_mass = 0.0;    // not yet set
+    force->e_mass = 0.0; // not yet set
     force->hhmrr2e = 0.0;
     force->mvh2r = 0.0;
     force->angstrom = 1.0e-10;
@@ -240,8 +250,9 @@ void Update::set_units(const char *style)
 
     dt = 1.0e-8;
     neighbor->skin = 0.001;
-
-  } else if (strcmp(style,"cgs") == 0) {
+  }
+  else if (strcmp(style, "cgs") == 0)
+  {
     force->boltz = 1.3806504e-16;
     force->hplanck = 6.62606896e-27;
     force->mvv2e = 1.0;
@@ -252,7 +263,7 @@ void Update::set_units(const char *style)
     force->qe2f = 1.0;
     force->vxmu2f = 1.0;
     force->xxt2kmu = 1.0;
-    force->e_mass = 0.0;    // not yet set
+    force->e_mass = 0.0; // not yet set
     force->hhmrr2e = 0.0;
     force->mvh2r = 0.0;
     force->angstrom = 1.0e-8;
@@ -261,8 +272,9 @@ void Update::set_units(const char *style)
 
     dt = 1.0e-8;
     neighbor->skin = 0.1;
-
-  } else if (strcmp(style,"electron") == 0) {
+  }
+  else if (strcmp(style, "electron") == 0)
+  {
     force->boltz = 3.16681534e-6;
     force->hplanck = 0.1519829846;
     force->mvv2e = 1.06657236;
@@ -273,7 +285,7 @@ void Update::set_units(const char *style)
     force->qe2f = 1.94469051e-10;
     force->vxmu2f = 3.39893149e1;
     force->xxt2kmu = 3.13796367e-2;
-    force->e_mass = 0.0;    // not yet set
+    force->e_mass = 0.0; // not yet set
     force->hhmrr2e = 0.0;
     force->mvh2r = 0.0;
     force->angstrom = 1.88972612;
@@ -282,8 +294,9 @@ void Update::set_units(const char *style)
 
     dt = 0.001;
     neighbor->skin = 2.0;
-
-  } else if (strcmp(style,"micro") == 0) {
+  }
+  else if (strcmp(style, "micro") == 0)
+  {
     force->boltz = 1.3806504e-8;
     force->hplanck = 6.62606896e-13;
     force->mvv2e = 1.0;
@@ -294,7 +307,7 @@ void Update::set_units(const char *style)
     force->qe2f = 1.0;
     force->vxmu2f = 1.0;
     force->xxt2kmu = 1.0;
-    force->e_mass = 0.0;    // not yet set
+    force->e_mass = 0.0; // not yet set
     force->hhmrr2e = 0.0;
     force->mvh2r = 0.0;
     force->angstrom = 1.0e-4;
@@ -303,8 +316,9 @@ void Update::set_units(const char *style)
 
     dt = 2.0;
     neighbor->skin = 0.1;
-
-  } else if (strcmp(style,"nano") == 0) {
+  }
+  else if (strcmp(style, "nano") == 0)
+  {
     force->boltz = 0.013806503;
     force->hplanck = 6.62606896e-4;
     force->mvv2e = 1.0;
@@ -315,7 +329,7 @@ void Update::set_units(const char *style)
     force->qe2f = 1.0;
     force->vxmu2f = 1.0;
     force->xxt2kmu = 1.0;
-    force->e_mass = 0.0;    // not yet set
+    force->e_mass = 0.0; // not yet set
     force->hhmrr2e = 0.0;
     force->mvh2r = 0.0;
     force->angstrom = 1.0e-1;
@@ -324,37 +338,42 @@ void Update::set_units(const char *style)
 
     dt = 0.00045;
     neighbor->skin = 0.1;
+  }
+  else
+    error->all(FLERR, "Illegal units command");
 
-  } else error->all(FLERR,"Illegal units command");
-
-  delete [] unit_style;
+  delete[] unit_style;
   int n = strlen(style) + 1;
   unit_style = new char[n];
-  strcpy(unit_style,style);
+  strcpy(unit_style, style);
 }
 
 /* ---------------------------------------------------------------------- */
 
 void Update::create_integrate(int narg, char **arg, char *suffix)
 {
-  if (narg < 1) error->all(FLERR,"Illegal run_style command");
+  if (narg < 1)
+    error->all(FLERR, "Illegal run_style command");
 
-  delete [] integrate_style;
+  delete[] integrate_style;
   delete integrate;
 
   int sflag;
-  new_integrate(arg[0],narg-1,&arg[1],suffix,sflag);
+  new_integrate(arg[0], narg - 1, &arg[1], suffix, sflag);
 
-  if (sflag) {
+  if (sflag)
+  {
     char estyle[256];
-    sprintf(estyle,"%s/%s",arg[0],suffix);
+    sprintf(estyle, "%s/%s", arg[0], suffix);
     int n = strlen(estyle) + 1;
     integrate_style = new char[n];
-    strcpy(integrate_style,estyle);
-  } else {
+    strcpy(integrate_style, estyle);
+  }
+  else
+  {
     int n = strlen(arg[0]) + 1;
     integrate_style = new char[n];
-    strcpy(integrate_style,arg[0]);
+    strcpy(integrate_style, arg[0]);
   }
 }
 
@@ -367,37 +386,43 @@ void Update::new_integrate(char *style, int narg, char **arg,
 {
   int success = 0;
 
-  if (suffix && lmp->suffix_enable) {
+  if (suffix && lmp->suffix_enable)
+  {
     sflag = 1;
     char estyle[256];
-    sprintf(estyle,"%s/%s",style,suffix);
+    sprintf(estyle, "%s/%s", style, suffix);
     success = 1;
 
-    if (0) return;
+    if (0)
+      return;
 
 #define INTEGRATE_CLASS
-#define IntegrateStyle(key,Class) \
-    else if (strcmp(estyle,#key) == 0) integrate = new Class(lmp,narg,arg);
+#define IntegrateStyle(key, Class) \
+  else if (strcmp(estyle, #key) == 0) integrate = new Class(lmp, narg, arg);
 #include "style_integrate.h"
 #undef IntegrateStyle
 #undef INTEGRATE_CLASS
 
-    else success = 0;
+    else
+      success = 0;
   }
 
-  if (!success) {
+  if (!success)
+  {
     sflag = 0;
 
-    if (0) return;
+    if (0)
+      return;
 
 #define INTEGRATE_CLASS
-#define IntegrateStyle(key,Class) \
-    else if (strcmp(style,#key) == 0) integrate = new Class(lmp,narg,arg);
+#define IntegrateStyle(key, Class) \
+  else if (strcmp(style, #key) == 0) integrate = new Class(lmp, narg, arg);
 #include "style_integrate.h"
 #undef IntegrateStyle
 #undef INTEGRATE_CLASS
 
-    else error->all(FLERR,"Illegal integrate style");
+    else
+      error->all(FLERR, "Illegal integrate style");
   }
 }
 
@@ -405,24 +430,27 @@ void Update::new_integrate(char *style, int narg, char **arg,
 
 void Update::create_minimize(int narg, char **arg)
 {
-  if (narg != 1) error->all(FLERR,"Illegal min_style command");
+  if (narg != 1)
+    error->all(FLERR, "Illegal min_style command");
 
-  delete [] minimize_style;
+  delete[] minimize_style;
   delete minimize;
 
-  if (0) return;      // dummy line to enable else-if macro expansion
+  if (0)
+    return; // dummy line to enable else-if macro expansion
 
 #define MINIMIZE_CLASS
-#define MinimizeStyle(key,Class) \
-  else if (strcmp(arg[0],#key) == 0) minimize = new Class(lmp);
+#define MinimizeStyle(key, Class) \
+  else if (strcmp(arg[0], #key) == 0) minimize = new Class(lmp);
 #include "style_minimize.h"
 #undef MINIMIZE_CLASS
 
-  else error->all(FLERR,"Illegal min_style command");
+  else
+    error->all(FLERR, "Illegal min_style command");
 
   int n = strlen(arg[0]) + 1;
   minimize_style = new char[n];
-  strcpy(minimize_style,arg[0]);
+  strcpy(minimize_style, arg[0]);
 }
 
 /* ----------------------------------------------------------------------
@@ -431,7 +459,8 @@ void Update::create_minimize(int narg, char **arg)
 
 void Update::reset_timestep(int narg, char **arg)
 {
-  if (narg != 1) error->all(FLERR,"Illegal reset_timestep command");
+  if (narg != 1)
+    error->all(FLERR, "Illegal reset_timestep command");
   bigint newstep = ATOBIGINT(arg[0]);
   reset_timestep(newstep);
 }
@@ -450,31 +479,35 @@ void Update::reset_timestep(int narg, char **arg)
 
 void Update::reset_timestep(bigint newstep)
 {
-  
+
   ntimestep_reset_since_last_run = true;
   bigint oldtimestep = ntimestep;
 
   ntimestep = newstep;
-  if (ntimestep < 0) error->all(FLERR,"Timestep must be >= 0");
-  if (ntimestep > MAXBIGINT) error->all(FLERR,"Too big a timestep");
+  if (ntimestep < 0)
+    error->all(FLERR, "Timestep must be >= 0");
+  if (ntimestep > MAXBIGINT)
+    error->all(FLERR, "Too big a timestep");
 
   atime += (ntimestep - atimestep) * dt;
   if (atime < 0)
-      atime = 0;
+    atime = 0;
   atimestep = ntimestep;
 
   output->reset_timestep(ntimestep);
 
-  for (int i = 0; i < modify->nfix; i++) {
-    if (modify->fix[i]->time_depend && !force_dt_reset_) 
+  for (int i = 0; i < modify->nfix; i++)
+  {
+    if (modify->fix[i]->time_depend && !force_dt_reset_)
       error->all(FLERR,
                  "Cannot reset timestep with a time-dependent fix defined");
-    modify->fix[i]->reset_timestep(ntimestep,oldtimestep);
+    modify->fix[i]->reset_timestep(ntimestep, oldtimestep);
   }
 
   eflag_global = vflag_global = -1;
 
-  for (int i = 0; i < modify->ncompute; i++) {
+  for (int i = 0; i < modify->ncompute; i++)
+  {
     modify->compute[i]->invoked_scalar = -1;
     modify->compute[i]->invoked_vector = -1;
     modify->compute[i]->invoked_array = -1;
@@ -483,13 +516,8 @@ void Update::reset_timestep(bigint newstep)
   }
 
   for (int i = 0; i < modify->ncompute; i++)
-    if (modify->compute[i]->timeflag) modify->compute[i]->clearstep();
-
-  // NOTE: 7Jun12, adding rerun command, don't think this is required
-
-  //for (int i = 0; i < domain->nregion; i++)
-  //  if (domain->regions[i]->dynamic_check())
-  //    error->all(FLERR,"Cannot reset timestep with a dynamic region defined");
+    if (modify->compute[i]->timeflag)
+      modify->compute[i]->clearstep();
 }
 
 /* ----------------------------------------------------------------------
@@ -499,7 +527,8 @@ void Update::reset_timestep(bigint newstep)
 
 void Update::update_time()
 {
-  atime += (ntimestep-atimestep) * dt;
+
+  atime += (ntimestep - atimestep) * dt;
   atimestep = ntimestep;
 }
 
@@ -510,7 +539,9 @@ void Update::update_time()
 bigint Update::memory_usage()
 {
   bigint bytes = 0;
-  if (whichflag == 1) bytes += integrate->memory_usage();
-  else if (whichflag == 2) bytes += minimize->memory_usage();
+  if (whichflag == 1)
+    bytes += integrate->memory_usage();
+  else if (whichflag == 2)
+    bytes += minimize->memory_usage();
   return bytes;
 }

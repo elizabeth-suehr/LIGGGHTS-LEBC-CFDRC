@@ -236,6 +236,7 @@ Atom::Atom(LAMMPS *lmp) : Pointers(lmp)
   damage_flag = 0;
 
   properties = new Properties(lmp); 
+  lebc_highest_atom_id =0;
 }
 
 /* ---------------------------------------------------------------------- */

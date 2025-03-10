@@ -79,6 +79,24 @@ ParticleToInsertMultisphere::~ParticleToInsertMultisphere()
 
 /* ---------------------------------------------------------------------- */
 
+int ParticleToInsertMultisphere::set_x_v_omega_center_processor(int i, int total)
+{
+    double x[3] = {0.0};
+
+    double ii = ((double)i)/((double) total);
+
+    x[0] = domain->sublo[0] + (domain->subhi[0] - domain->sublo[0])/4.0 + (domain->subhi[0] - domain->sublo[0])/2.0 * ii;
+    x[1] = (domain->subhi[1] - domain->sublo[1])/2.0;
+    x[2] = (domain->subhi[2] - domain->sublo[2])/2.0;
+    
+    double v[3] = {0.0};
+    double omega[3] = {0.0};
+    double quat[4] = {1.0,0.0,0.0,0.0};
+
+    return ParticleToInsertMultisphere::set_x_v_omega(x,v,omega,quat);
+}
+
+
 int ParticleToInsertMultisphere::set_x_v_omega(double *x, double *v, double *omega, double *quat)
 {
     double disp_glob[3];
@@ -193,15 +211,29 @@ int ParticleToInsertMultisphere::insert()
         //if (domain->is_in_extended_subdomain(xcm_ins))
         //{
             inserted++;
-            atom->avec->create_atom(atom_type,x_ins[i]);
+
+	    if(atom_type_vector_flag){
+              atom->avec->create_atom(atom_type_vector[i],x_ins[i]);
+	    }
+	    else
+              atom->avec->create_atom(atom_type,x_ins[i]);
             
             int m = atom->nlocal - 1;
             atom->mask[m] = 1 | groupbit;
             atom->radius[m] = radius_ins[i];
-            atom->density[m] = density_ins;
+	    if(atom_type_vector_flag){
+	       atom->density[m] = ndensity_ins[i];
+               atom->rmass[m] = volume_ins*ndensity_ins[i];
 
-            atom->rmass[m] = mass_ins; 
+              if (atom_type_vector[i] == 2) {
+                atom->type[m] = 2;
+              }
+	    }
+	    else{
+              atom->density[m] = density_ins;
 
+              atom->rmass[m] = volume_ins*density_ins;
+            }
             vectorZeroize3D(atom->v[m]);
             vectorZeroize3D(atom->omega[m]);
             vectorZeroize3D(atom->f[m]);
